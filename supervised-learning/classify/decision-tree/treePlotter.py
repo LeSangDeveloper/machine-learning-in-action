@@ -45,8 +45,8 @@ def retrieveTree(i):
 	return listOfTrees[i]
 
 def plotMidText(centerPt, parentPt, txtString):
-	xMid = (centerPt[0] + parentPt[0])/2.0 + centerPt[0]
-	yMid = (centerPt[1] + parentPt[1])/2.0 + centerPt[1]
+	xMid = (parentPt[0] - centerPt[0])/2.0 + centerPt[0]
+	yMid = (parentPt[1] - centerPt[1])/2.0 + centerPt[1]
 	createPlot.ax1.text(xMid, yMid, txtString)
 
  
@@ -79,13 +79,3 @@ def createPlot(inTree):
 	plotTree.yOff = 1.0
 	plotTree(inTree, (0.5, 1.0), '')
 	plt.show()
-
-def classify(inputTree, featLabels, testVec):
-	rootNodeKey = list(inputTree.keys())[0]
-	subTrees = inputTree[rootNodeKey]
-	featIndex = featLabels.index(rootNodeKey)
-	for key, value in subTrees.items():
-		if testVec[featIndex] == key:
-			if type(value).__name__=='dict':
-				return classify(value, featLabels, testVec)
-			else: return value
