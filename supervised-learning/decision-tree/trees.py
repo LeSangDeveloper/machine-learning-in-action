@@ -49,3 +49,24 @@ def chooseBestFeatureToSplit(dataSet):
 			bestInfoGain = infoGain
 			bestFeature = i
 	return bestFeature
+
+def classify(inputTree, featLabels, testVec):
+        rootNodeKey = list(inputTree.keys())[0]
+        subTrees = inputTree[rootNodeKey]
+        featIndex = featLabels.index(rootNodeKey)
+        for key, value in subTrees.items():
+                if testVec[featIndex] == key:
+                        if type(value).__name__=='dict':
+                                return classify(value, featLabels, testVec)
+                        else: return value
+
+def storeTree(inputTree, filename):
+	import pickle
+	fw = open(filename, 'wb')
+	pickle.dump(inputTree, fw)
+	fw.close()
+
+def grabTree(filename):
+	import pickle
+	fr = open(filename, 'rb')
+	return pickle.load(fr)
