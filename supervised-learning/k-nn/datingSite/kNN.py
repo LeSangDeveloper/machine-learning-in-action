@@ -56,11 +56,11 @@ def testDatingClass():
 
 def classifyPerson():
 	resultList = ['not at all', 'in small dose', 'in large dose']
-	gameSpentPercent = float(input("Game: "))
-	ffMiles = float(input("Flyer miles: "))
-	iceCream = float(input("Ice Cream:" ))
+	gameSpentPercent = float(input("percentage of time spent playing video game: "))
+	ffMiles = float(input("frequent flier miles earned per year: "))
+	iceCream = float(input("Liters of ice cream consumed per: " ))
 	datingMatData, datingLabels = file2matrix("datingTestSet2.txt")
 	normData, rangeValues, minValues = autoNorm(datingMatData)
 	personArray = array([ffMiles, gameSpentPercent, iceCream])
-	classifyResult = classify0(personArray, normData, datingLabels, 3)
-	print("%s" % (resultList[classifyResult - 1]))
+	classifyResult = classify0((personArray - minValues) / rangeValues, normData, datingLabels, 3)
+	print("You will probaly like this person: %s" % (resultList[classifyResult - 1]))
