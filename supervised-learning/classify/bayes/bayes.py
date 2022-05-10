@@ -70,7 +70,8 @@ def testingNB():
 
 def textParse(bigString):
     import re
-    listOfTokens = re.split(r' ', bigString)
+    regEx = re.compile('\\W+')
+    listOfTokens = regEx.split(bigString)
     print(listOfTokens)
     return [tok.lower() for tok in listOfTokens if len(tok) > 2]
 	
