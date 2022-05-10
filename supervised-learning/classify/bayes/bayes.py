@@ -69,7 +69,35 @@ def testingNB():
     print(testEntry, ' classified as: ', classifyNB(thisDoc, p0V, p1V, pAb))
 
 def textParse(bigString):
-	import re
-	listOfTokens = re.split(r'\W*', bigString)
-	return [tok.lower() for tok in listOfTokens if len(tok) > 2]
+    import re
+    listOfTokens = re.split(r'\W*', bigString)
+    return [tok.lower() for tok in listOfTokens if len(tok) > 2]
 	
+def spamTest():
+    classList = []; docList = []; fullText = []
+    for i in range(1, 26):
+        wordList = textParse(open('email/spam/%d.txt' % i, encoding=None).read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(1)
+        wordList = textParse(open('email/ham/%d.txt' % i, encoding=None).read())
+        docList.append(wordList)
+        fullText.extend(wordList)
+        classList.append(0)
+    vocabList = createVocabList(wordList)
+    trainingSet = [i for i in range(50)]; testSet = []
+    for i in range(10):
+        randIndex = int(random.uniform(0, len(trainingSet)))
+        testSet.append(trainingSet[randIndex])
+        del(trainingSet[randIndex])
+    trainMat = []; trainClasses = []
+    for docIndex in trainingSet:
+        trainMat.append(setOfWords2Vec(vocabList, docList[docIndex]))
+        trainClasses.append(classList[docIndex])
+    p0V, p1V, pSpam = trainNB0(array(trainMat), array(trainClasses))
+    errorCount = 0.0
+    for docIndex in testSet:
+        wordVect = setOfWords2Vec(vocabList, docList[docIndex])
+        if classifyNB(array(wordVect), p0V, p1V, pSpam) != classList[docIndex]:
+            errorCount += 1.0
+    print("The error rate is: ", errorCount/len(testSet))
