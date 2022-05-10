@@ -70,17 +70,22 @@ def testingNB():
 
 def textParse(bigString):
     import re
-    listOfTokens = re.split(r'\W*', bigString)
+    listOfTokens = re.split(r' ', bigString)
+    print(listOfTokens)
     return [tok.lower() for tok in listOfTokens if len(tok) > 2]
 	
 def spamTest():
     classList = []; docList = []; fullText = []
     for i in range(1, 26):
-        wordList = textParse(open('email/spam/%d.txt' % i, encoding=None).read())
+        fr = open('email/spam/%d.txt' % i, encoding='cp1250')
+        wordStr = fr.read()
+        wordList = textParse(wordStr)
         docList.append(wordList)
         fullText.extend(wordList)
         classList.append(1)
-        wordList = textParse(open('email/ham/%d.txt' % i, encoding=None).read())
+        fr = open('email/ham/%d.txt' % i, encoding='cp1250')
+        wordStr = fr.read()
+        wordList = textParse(wordStr)
         docList.append(wordList)
         fullText.extend(wordList)
         classList.append(0)
