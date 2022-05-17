@@ -24,9 +24,31 @@ def gradAscent(dataMatIn, classLabels):
 		weights = weights + alpha * dataMat.transpose() * errors
 	return weights
 
+def stocGradAscent0(dataMatIn, classLabels):
+	m, n = shape(dataMatIn)
+	weights = ones(n)
+	alpha = 0.001
+	for i in range(m):
+		errors = (classLabels[i] - sigmoid(sum(dataMatIn[i] * weights))) 
+		weights = weights + alpha * dataMatIn[i] * errors
+	return weights
+
+def stocGradAscent1(dataMatIn, classLabels, iterNumber=150):
+	m, n = shape(dataMatIn)
+	weights = ones(n)
+	for i in range(iterNumber):
+		dataIndex = [t for t in range(m)]
+		for j in range(m):
+			alpha = 4.0/(1.0 + i + j) + 0.01
+			randIndex = int(random.uniform(0, len(dataIndex)))
+			errors = (classLabels[randIndex] - sigmoid(sum(dataMatIn[randIndex] * weights))) 
+			weights = weights + alpha * dataMatIn[randIndex] * errors
+			del(dataIndex[randIndex]) 
+	return weights
+
 def plotBestFit(wei):
     import matplotlib.pyplot as plt
-    weights = wei.getA()
+    weights = wei
     dataMat, labelMat = loadDataSet()
     dataArr = array(dataMat)
     n = shape(dataArr)[0]
