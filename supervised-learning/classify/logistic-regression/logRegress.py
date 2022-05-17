@@ -68,3 +68,39 @@ def plotBestFit(wei):
     ax.plot(x, y)
     plt.xlabel('X1'); plt.ylabel('X2')
     plt.show()
+
+def classifyVector(inX, weights):
+	prob = sigmoid(sum(inX*weights))
+	if prob > 0.5: return 1.0
+	else: return 0.0
+
+def colicTest():
+	frTrain = open('horseColicTraining.txt')
+	frTest = open('horseColicTest.txt')
+	trainingSet = []; trainingLabel = []
+	for line in frTrain.readlines():
+		currLine = line.strip().split('\t')
+		lineArr = []
+		for i in range(21):
+			lineArr.append(float(currLine[i]))
+		trainingSet.append(lineArr)
+		trainingLabel.append(float(currLine[21]))
+	trainingWeights = stocGradAscent1(array(trainingSet), trainingLabel)
+	errorCount = 0.0; numTestVec = 0.0
+	for line in frTest.readlines():
+		currLine = line.strip().split('\t')
+		lineArr = []
+		for i in range(21):
+			lineArr.append(float(currLine[i]))
+		if classifyVector(lineArr, trainingWeights) == float(currLine[21]): errorCount += 1.0
+		numTestVec += 1.0
+		errorRate = errorCount / numTestVec
+		print("the error rate of this test: %f" % errorRate)
+		return errorRate
+
+def multiTest():
+	numTest = 10; errorSum = 0.0
+	for k in range(numTest):
+		errorSum += colicTest()
+	print("After %d iterations the average error rate is: %f" % (numTest, errorSum/float(numTest)))
+		
