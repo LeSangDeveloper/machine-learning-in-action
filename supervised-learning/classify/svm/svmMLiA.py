@@ -1,76 +1,100 @@
 from numpy import *
 
-def loadDataSet(filename):
-    dataMat = []; labelMat = []
-    fr = open(filename)
-    for line in fr.readlines():
-        lineArr = line.strip().split('\t')
-        dataMat.append([float(lineArr[0]), float(lineArr[1])])
-        labelMat.append(float(lineArr[2]))
-    return dataMat, labelMat
+class optStruct():
+    def __init__(self, dataMatIn, classLabels, C, toler):
+        self.X = dataMatIn
+        self.labelMat = classLabels
+        self.m, _ = shape(self.X)
+        self.C = C
+        self.tol = toler
+        self.alphas = mat(zeros((self.m, 1)))
+        self.b = 0
+        self.eCache = mat(zeros((self.m, 2)))
+
+def calcEk(oS, k):
+    fXk = float(multiply(oS.alphas, oS.labelMat).T * (oS.X * oS.X[k,:].T)) + oS.b
+    Ek = fXk - oS.labelMat[k]
+    return Ek
 
 def selectJrand(i, m):
     j = i
     while (i == j):
-        j = int(random.uniform(0, m))
+        j = float(random.uniform(0, m))
     return j
 
-def clipAlpha(aj, H, L):
-    if aj > H:
-        aj = H
-    if aj < L:
-        aj = L
-    return aj
+def selectJ(i, oS, Ei):
+    maxK = -1; maxDeltaE = 0; Ej = 0
+    oS.eCache[i] = [1, Ei]
+    validEcacheList = nonzero(oS.eCache[:,0].A)[0]
+    if len(validEcacheList) > 0:
+        for k in validEcacheList:
+            if k == i: continue
+            Ek = calcEk(oS, k)
+            deltaE = abs(Ei - Ej)
+            if (deltaE > maxDeltaE): maxDeltaE = deltaE; maxK = k; Ej = Ek
+        return maxK, Ej
+    else:
+        j = selectJrand(i, oS.m)
+        Ej = calcEk(oS, k)
+        return j, Ej
 
-def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
-    dataMatrix = mat(dataMatIn); labelMat = mat(classLabels).transpose()
-    m, _ = shape(dataMatrix)
-    alphas = mat(zeros((m, 1))); iterTemp = 0; b = 0
-    while (iterTemp < maxIter):
-        alphasPairsChanged = 0
-        for i in range(m):
-            # f(xi) = w.xi + b
-            fXi = float((multiply(alphas, labelMat).T * (dataMatrix * dataMatrix[i,:].T))) + b
-            # E(i) = f(xi) - y(i)
-            Ei = fXi - float(labelMat[i])
-            if ((Ei * labelMat[i] < -toler) and (alphas[i] < C) or (Ei * labelMat[i] > toler and alphas[i] > 0)):
-                j = selectJrand(i, m)
-                # f(xj) = w.xj + b and w = sum(alphaj*yj*(x, xj) + b
-                fXj = (multiply(alphas, labelMat).T * (dataMatrix * dataMatrix[j,:].T)) + b
-                # E(j) = f(xj) - yj
-                Ej = fXj - float(labelMat[j])
-                # calculate L and H
-                L = 0.0; H = 0.0
-                if (labelMat[i] != labelMat[j]):
-                    L = max(0, alphas[j] - alphas[i])
-                    H = min(C, C + alphas[j] - alphas[i])
-                else:
-                    L = max(0, alphas[j] + alphas[i] - C)
-                    H = max(C, alphas[j] + alphas[i])
-                if (labelMat[i] == labelMat[j]): print("L == H") ; continue
-                # eta (η) = 2 * (xi, xj) - (xi, xi) - (xj, xj)
-                eta = 2 * (dataMatrix[i,:] * dataMatrix[j,:].T) - (dataMatrix[i,:] * dataMatrix[i,:].T) - (dataMatrix[j,:] * dataMatrix[j,:].T)
-                if (eta >= 0): print("eta >= 0"); continue
-                alphaIold = alphas[i].copy()
-                alphaJold = alphas[j].copy()
-                # alphaj = alphaj - yj*(Ei - Ej)/eta
-                alphas[j] = alphas[j] - labelMat[j]*(Ei - Ej)/eta
-                # clip alpha
-                alphas[j] = clipAlpha(alphas[j], H, L)
-                if (abs(alphas[j] - alphaJold) < 0.00001): print("J is not moving enough"); continue
-                # alphai = alphai + (yi * yj)*(alphaJold - alphaj)
-                alphas[i] = alphas[i] + (labelMat[i] * labelMat[j]) * (alphaJold - alphas[j])
-                # b1 = b - Ei - yi * (alphai - alphaIold) * (xi, xi) - yj * (alphaj - alphaJOld) * (xi, xj)
-                b1 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dataMatrix[i,:] * dataMatrix[i,:].T - labelMat[j] * (alphas[j] - alphaJold) * dataMatrix[i,:] * dataMatrix[j,:].T
-                # b2 = b - Ej - yj * (alphaj - alphaJOld) * (xj, xj) - yi * (alphai - alphaIOld) * (xi, xj)
-                b2 = b - Ej - labelMat[j] * (alphas[j] - alphaJold) * dataMatrix[j,:] * dataMatrix[j,:].T - labelMat[j] * (alphas[i] - alphaIold) * dataMatrix[i,:] * dataMatrix[j,:].T
-                # 0 < alphas[i] < C => b1; 0 < alpjas[j] < C => b2; else => (b1 + b2) / 2
-                if (0 < alphas[i]) and (C > alphas[i]): b = b1
-                elif (0 < alphas[j]) and (C > alphas[j]): b = b2
-                else: b = (b1 + b2) / 2.0
-                alphasPairsChanged += 1.0
-                print("iter: %d, i: %d, alpha pairs changed: %d" % (iterTemp, i, alphasPairsChanged))
-        if (alphasPairsChanged == 0): iterTemp += 1
-        else: iterTemp = 0
-        print("iteration number: %d" % (iterTemp))
-    return b, alphas
+def updateEk(oS, k):
+    Ek = calcEk(oS, k)
+    oS.eCache[k] = [1, Ek]
+
+def clipAlpha(alpha, H, L):
+    if alpha > H: alpha = H
+    if alpha < L: alpha = L
+    return alpha
+
+def innerL(i, oS):
+    Ei = calcEk(oS, i)
+    if ((Ei * oS.labelMat[i] < -oS.tol) and (oS.alphas[i] < oS.C)) or ((Ei * oS.labelMat[i] > oS.tol) and (oS.alphas[i] > 0)):
+        j, Ej = selectJ(i, oS, Ei)
+        if (oS.labelMat[i] != oS.labelMat[j]):
+            L = max(0, oS.alphas[j] - oS.alphas[i])
+            H = min(oS.C, oS.C + oS.alphas[j] - oS.alphas[i])
+        else:
+            L = max(0, oS.alphas[j] + oS.alphas[i])
+            H = min(oS.C, oS.alphas[j] + oS.alphas[i] - oS.C)
+        if L == H: print("L == H"); return 0
+        eta = 2 * (oS.X[i,:] * oS.X[j,:].T) - (oS.X[i,:] * oS.X[i,:].T) - (oS.X[j,:]*oS.X[j,:].T)
+        if eta >= 0: print("eta >= 0"); return 0
+        alphaIold = oS.alphas[i].copy()
+        alphaJold = oS.alphas[j].copy()
+        oS.alphas[j] = oS.alphas[j] - oS.labelMat[j] * (Ei - Ej)/eta
+        oS.alphas[j] = clipAlpha(oS.alphas[j], H, L)
+        updateEk(oS, j)
+        if (abs(oS.alphas[j] - alphaJold) < 0.00001): print("j is not moving enough"); return 0
+        oS.alphas[i] = oS.alphas[j] + oS.labelMat[i] * oS.labelMat[j] * (alphaJold - oS.alphas[j])
+        updateEk(oS, i)
+        b1 = oS.b - Ei - oS.labelMat[i] * (alphaIold - oS.alphas[i]) * (oS.X[i,:] * oS.X[i,:].T) - oS.labelMat[j] * (alphaJold - oS.alphas[j]) * (oS.X[i,:] * oS.X[j,:].T)
+        b2 = oS.b - Ej - oS.labelMat[j] * (alphaJold - oS.alphas[j]) * (oS.X[j,:] * oS.X[j,:].T) - oS.labelMat[i] * (alphaIold - oS.alphas[i]) * (oS.X[i,:] * oS.X[j,:].T)
+        if (oS.alphas[i] > 0 and oS.alphas[i] < oS.C): b = b1
+        elif (oS.alphas[j] > 0 and oS.alphas[j] < oS.C): b = b2
+        else: b = (b1 + b2) / 2.0
+        return 1.0
+    else: return 0
+
+def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup=('lin', 0)):
+    oS = optStruct(mat(dataMatIn), mat(classLabels).transpose(), C, toler)
+    iterTemp = 0
+    alphaPairsChanged = 0
+    entireSet = True
+    while (iterTemp < maxIter) and ((alphaPairsChanged > 0) or entireSet):
+        alphaPairsChanged = 0
+        if (entireSet):
+            for i in range(oS.m):
+                alphaPairsChanged += innerL(i, oS)
+                print("fullset, iter: %d, i: %d, alphaPairsChanged: %d" % (iterTemp, i, alphaPairsChanged))
+            iterTemp += 1
+        else:
+            nonBoundIs = nonzero((oS.alphas.A > 0) * (oS.alphas.A < oS.C))[0]
+            for i in nonBoundIs:
+                alphaPairsChanged += innerL(i, oS)
+                print("non-bound, iter: %d, i: %d, alphaPairsChanged: %d" % (iterTemp, i, alphaPairsChanged))
+            iterTemp += 1                
+        if entireSet: entireSet = False
+        elif (alphaPairsChanged == 0): entireSet = True
+        print("iteration number: %d" % iterTemp)
+    return oS.b, oS.alphas
