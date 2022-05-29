@@ -98,3 +98,11 @@ def smoP(dataMatIn, classLabels, C, toler, maxIter, kTup=('lin', 0)):
         elif (alphaPairsChanged == 0): entireSet = True
         print("iteration number: %d" % iterTemp)
     return oS.b, oS.alphas
+
+def calcWs(alphas, dataArr, classLabels):
+    X = mat(dataArr); labelMat = mat(classLabels).transpose()
+    _, n = shape(X)
+    w = zeros(zeros(n, 1))
+    for i in range(n):
+        w += multiply(alphas[i] * labelMat[i], X[i,:].T)
+    return w
