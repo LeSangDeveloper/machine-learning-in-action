@@ -68,8 +68,8 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
                 if (0 < alphas[i]) and (C > alphas[i]): b = b1
                 elif (0 < alphas[j]) and (C > alphas[j]): b = b2
                 else: b = (b1 + b2) / 2.0
-        alphaPairsChanged += 1.0
-        print("iter: %d, i: %d, alpha pairs changed" % (iterTemp, i, alphaPairsChanged))
+        alphasPairsChanged += 1.0
+        print("iter: %d, i: %d, alpha pairs changed" % (iterTemp, i, alphasPairsChanged))
         if (alphasPairsChanged == 0): iterTemp += 1
         else: iterTemp = 0
     return b, alphas
