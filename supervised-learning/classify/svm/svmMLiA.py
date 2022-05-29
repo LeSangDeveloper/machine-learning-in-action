@@ -49,7 +49,7 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
                     H = max(C, alphas[j] + alphas[i])
                 if (labelMat[i] == labelMat[j]): print("L == H") ; continue
                 # eta (η) = 2 * (xi, xj) - (xi, xi) - (xj, xj)
-                eta = 2 * (dataMatrix[i,:] * dataMatrix[j,:].T) - (dataMatrix[i,:] * dataMatrix[i,:].T) - (dataMatrix[j,:] * dataMatrix[j,:])
+                eta = 2 * (dataMatrix[i,:] * dataMatrix[j,:].T) - (dataMatrix[i,:] * dataMatrix[i,:].T) - (dataMatrix[j,:] * dataMatrix[j,:].T)
                 if (eta >= 0): print("eta >= 0"); continue
                 alphaIold = alphas[i].copy()
                 alphaJold = alphas[j].copy()
@@ -61,9 +61,9 @@ def smoSimple(dataMatIn, classLabels, C, toler, maxIter):
                 # alphai = alphai + (yi * yj)*(alphaJold - alphaj)
                 alphas[i] = alphas[i] + (labelMat[i] * labelMat[j]) * (alphaJold - alphas[j])
                 # b1 = b - Ei - yi * (alphai - alphaIold) * (xi, xi) - yj * (alphaj - alphaJOld) * (xi, xj)
-                b1 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * (dataMatrix[i:] * dataMatrix[i,:].T) - labelMat[j] * (alphas[j] - alphaJold) * (dataMatrix[i,:] * dataMatrix[j,:].T)
+                b1 = b - Ei - labelMat[i] * (alphas[i] - alphaIold) * dataMatrix[i,:] * dataMatrix[i,:].T - labelMat[j] * (alphas[j] - alphaJold) * dataMatrix[i,:] * dataMatrix[j,:].T
                 # b2 = b - Ej - yj * (alphaj - alphaJOld) * (xj, xj) - yi * (alphai - alphaIOld) * (xi, xj)
-                b2 = b - Ej - labelMat[j] * (alphas[j] - alphaJold) * (dataMatrix[j:] * dataMatrix[j,:].T) - labelMat[j] * (alphas[i] - alphaIold) * (dataMatrix[i,:] * dataMatrix[j,:].T)
+                b2 = b - Ej - labelMat[j] * (alphas[j] - alphaJold) * dataMatrix[j,:] * dataMatrix[j,:].T - labelMat[j] * (alphas[i] - alphaIold) * dataMatrix[i,:] * dataMatrix[j,:].T
                 # 0 < alphas[i] < C => b1; 0 < alpjas[j] < C => b2; else => (b1 + b2) / 2
                 if (0 < alphas[i]) and (C > alphas[i]): b = b1
                 elif (0 < alphas[j]) and (C > alphas[j]): b = b2
